@@ -93,7 +93,7 @@
     const auth = getAuth(app);
     
     // ВАЖНО: Замени этот ключ, если ошибка 404 сохранится!
-    const geminiKey = "AIzaSyDBVoW-cRg2KgNWvRnFvw0L-Mw2gVJItAA";
+    const geminiKey = "AIzaSyCFO5oTAiZgAHd4lGcGkGtGc5wppTmkqUE";
     const imgbbKey = "8f79008cc1cf4284a58a0a54f2988f23";
 
     let user = null;
@@ -133,29 +133,29 @@
     }
 
 async function askGemini(prompt) {
-        try {
-            // МЕНЯЕМ МОДЕЛЬ НА gemini-pro (самая стабильная версия)
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiKey}`;
-            
-            const resp = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            });
+    try {
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+        
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
+        });
 
-            const data = await resp.json();
+        const data = await resp.json();
 
-            if (!resp.ok) {
-                console.error("Gemini Error Details:", data);
-                return `🤖 Ошибка AI: ${data.error?.message || 'Ошибка доступа'}`;
-            }
-
-            return data.candidates[0].content.parts[0].text;
-        } catch (e) {
-            console.error("Network Error:", e);
-            return "🤖 Neuron AI: Ошибка сети. Проверьте соединение.";
+        if (!resp.ok) {
+            console.error("Gemini Error:", data);
+            return `🤖 Ошибка: ${data.error?.message || 'Доступ отклонен'}`;
         }
+
+        return data.candidates[0].content.parts[0].text;
+    } catch (e) {
+        return "🤖 Neuron AI: Ошибка сети.";
     }
+}
 
     // ЛОГИКА IMGBB
     document.getElementById('file-input').onchange = async (e) => {
@@ -206,4 +206,5 @@ async function askGemini(prompt) {
 </script>
 </body>
 </html>
+
 
