@@ -133,28 +133,37 @@
     }
 
 async function askGemini(prompt) {
-    try {
-        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
-        
-        const resp = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
-        });
+    // Список моделей для перебора, если одна не сработает
+    const models = [
+        "gemini-1.5-flash",
+        "gemini-pro"
+    ];
 
-        const data = await resp.json();
+    for (const model of models) {
+        try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
+            
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
+            });
 
-        if (!resp.ok) {
-            console.error("Gemini Error:", data);
-            return `🤖 Ошибка: ${data.error?.message || 'Доступ отклонен'}`;
+            const data = await resp.json();
+
+            if (resp.ok) {
+                return data.candidates[0].content.parts[0].text;
+            }
+            
+            console.warn(`Модель ${model} не ответила, пробую следующую...`);
+        } catch (e) {
+            console.error(`Ошибка при запросе к ${model}:`, e);
         }
-
-        return data.candidates[0].content.parts[0].text;
-    } catch (e) {
-        return "🤖 Neuron AI: Ошибка сети.";
     }
+    
+    return "🤖 Neuron AI: Не удалось подключиться ни к одной модели. Проверьте, включен ли VPN или не блокирует ли ваш провайдер запросы к Google API.";
 }
 
     // ЛОГИКА IMGBB
@@ -206,5 +215,6 @@ async function askGemini(prompt) {
 </script>
 </body>
 </html>
+
 
 
