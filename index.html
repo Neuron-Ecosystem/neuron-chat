@@ -133,37 +133,33 @@
     }
 
 async function askGemini(prompt) {
-    // Список моделей для перебора, если одна не сработает
-    const models = [
-        "gemini-1.5-flash",
-        "gemini-pro"
-    ];
+    try {
+        // Мы используем официальный эндпоинт, но добавим проверку региона
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+        
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
+        });
 
-    for (const model of models) {
-        try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
-            
-            const resp = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
-            });
+        const data = await resp.json();
 
-            const data = await resp.json();
-
-            if (resp.ok) {
-                return data.candidates[0].content.parts[0].text;
+        if (!resp.ok) {
+            // Если Google все еще отдает 404 или 403 из-за региона
+            if (resp.status === 404 || resp.status === 403) {
+                return "🤖 Neuron AI: Google блокирует доступ для вашего региона/ключа. Попробуйте сменить страну в VPN на США или Нидерланды.";
             }
-            
-            console.warn(`Модель ${model} не ответила, пробую следующую...`);
-        } catch (e) {
-            console.error(`Ошибка при запросе к ${model}:`, e);
+            return `🤖 Ошибка: ${data.error?.message || 'Сервис недоступен'}`;
         }
+
+        return data.candidates[0].content.parts[0].text;
+    } catch (e) {
+        // Если fetch вообще не сработал (сетевая блокировка)
+        return "🤖 Neuron AI: Сетевой шлюз заблокирован. Проверьте настройки VPN.";
     }
-    
-    return "🤖 Neuron AI: Не удалось подключиться ни к одной модели. Проверьте, включен ли VPN или не блокирует ли ваш провайдер запросы к Google API.";
 }
 
     // ЛОГИКА IMGBB
@@ -215,6 +211,7 @@ async function askGemini(prompt) {
 </script>
 </body>
 </html>
+
 
 
 
